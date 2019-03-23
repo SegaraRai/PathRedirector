@@ -26,7 +26,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID Reserved) {
         const std::string message = "Failed to Hook: "s + exception.what();
         MessageBoxA(NULL, message.c_str(), "PathRedirector", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
       } catch (...) {
-        MessageBoxA(NULL, "Failed to Hook", "PathRedirector", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
+        MessageBoxW(NULL, L"Failed to Hook", L"PathRedirector", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
       }
       return FALSE;
 
