@@ -4,6 +4,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <deque>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -48,6 +49,7 @@ public:
 private:
   std::wstring sourcePrefix;
   std::wstring destinationPrefix;
+  std::deque<std::wstring> excludes;
 
   static std::wstring GetPrefix(const std::wstring& filepath) {
     const auto fqPath = ToAbsoluteFilepath(ExpandEnvironmentVariable(filepath));
@@ -61,6 +63,13 @@ public:
   {
     sourcePrefix = GetPrefix(node["source"].as<std::wstring>());
     destinationPrefix = GetPrefix(node["destination"].as<std::wstring>());
+
+    const auto& exclude = node["exclude"];
+    if (exclude.Type() == YAML::NodeType::Sequence) {
+      for (const auto& excludeItem : exclude) {
+        excludes.emplace_back(L"\\"s + excludeItem.as<std::wstring>());
+      }
+    }
   }
 
   std::optional<std::wstring> Modify(const std::wstring& src) const {
@@ -72,6 +81,22 @@ public:
     }
     if (_wcsnicmp(src.c_str(), sourcePrefix.c_str(), sourcePrefix.size()) != 0) {
       return std::nullopt;
+    }
+    {
+      const auto srcAfterPrefix = src.c_str() + sourcePrefix.size();
+      const auto srcSizeAfterPrefix = src.size() - sourcePrefix.size();
+      for (const auto& excludeItem : excludes) {
+        if (srcSizeAfterPrefix < excludeItem.size()) {
+          continue;
+        }
+        if (srcSizeAfterPrefix > excludeItem.size() && srcAfterPrefix[excludeItem.size()] != L'\\') {
+          continue;
+        }
+        if (_wcsnicmp(srcAfterPrefix, excludeItem.c_str(), excludeItem.size()) != 0) {
+          continue;
+        }
+        return std::nullopt;
+      }
     }
     return destinationPrefix + src.substr(sourcePrefix.size());
   }

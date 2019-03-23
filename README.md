@@ -10,6 +10,8 @@
        last: true
        source: "%UserProfile%\\Documents"
        destination: ".\\Documents"
+       exclude:
+         - "desktop.ini"
      - type: filepath
        last: true
        source: "%UserProfile%\\Pictures"
